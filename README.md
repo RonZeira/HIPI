@@ -6,6 +6,8 @@ This is not an official Verily product.
 
 [HIPI: Spatially Resolved Multiplexed Protein Expression Inferred from H&amp;E WSIs](https://www.biorxiv.org/content/10.1101/2024.03.26.586744v1)
 
+![Overview Figure](overview_fig.png)
+
 ### Installation
 
 *   Create conda environment:
