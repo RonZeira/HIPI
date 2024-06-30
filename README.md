@@ -41,7 +41,5 @@ Run the `cycif_eval_main.py` script with the model configuration and checkpoint 
 python cycif_eval_main.py --cfg_file configs/ssl_vit_mlp8_16channels.yaml --ckpt_file "${ckpt_file}" --test_csv "${test_csv}" --num_workers 4 --out_path "${out_path}" --batch_size 512 --device cuda:0 --datasets "${dataset}"
 ```
 
+![Verily_Corp_logo_2023_RGB_Verily_Logo_Type_Color_3](https://github.com/RonZeira/HIPI/assets/37271181/3c71fdff-ba27-4704-9816-88b6d25b1593)
 
-
-![Verily_Corp_logo_2023_RGB_Verily_Logo_Type_Color_3](https://github.com/RonZeira/HIPI/assets/37271181/dd8b
-0998-b967-4933-aa71-59c9e45c4bf2)
