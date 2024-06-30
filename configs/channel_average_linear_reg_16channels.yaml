@@ -1,0 +1,58 @@
+model:
+  base_learning_rate: 1.0e-6
+  target: code.models.cycif_image_regressor
+  params:
+    monitor: "val/loss"
+    out_channels: 16
+    hidden_channels: []
+    norm_layer: BatchNorm1d
+    activation_layer: GELU
+    dropout: 0.0 
+    final_activation: Identity
+    freeze_feature_extractor: True
+    feature_extractor:
+      target: code.models.image_channel_average
+
+    loss:
+      target: code.models.cycif_loss
+      params:
+        loss: MSELoss
+        channel_names: [Keratin.mean, Ki67.mean, CD3.mean, CD20.mean, CD45RO.mean, CD4.mean, CD8a.mean, CD68.mean, CD163.mean, FOXP3.mean, PD1.mean, PDL1.mean, CD31.mean, aSMA.mean, Desmin.mean, CD45.mean]
+
+data:
+  target: code.data.DataModuleFromConfig
+  params:
+    batch_size: 2048 # 512 # 256
+    num_workers: 8 # 32
+    common_args:
+      img_dir_prefix: /home/jupyter/CycifPreprocess/Crops/
+      sample_cols: [Sample, x, y]
+      label_col: [Keratin.mean, Ki67.mean, CD3.mean, CD20.mean, CD45RO.mean, CD4.mean, CD8a.mean, CD68.mean, CD163.mean, FOXP3.mean, PD1.mean, PDL1.mean, CD31.mean, aSMA.mean, Desmin.mean, CD45.mean]
+    train:
+    ### Disbale augmentations
+      # target: code.data.CycifImageTrainDatasetFromCsv
+      target: code.data.CycifImageTestDatasetFromCsv
+      params:
+        df_file: /home/jupyter/CycifPreprocess/ProcessedData/sample_patches_measurements_with_cells_gating_channels_train.csv
+    validation:
+      target: code.data.CycifImageTestDatasetFromCsv
+      params:
+        df_file: /home/jupyter/CycifPreprocess/ProcessedData/sample_patches_measurements_with_cells_gating_channels_val.csv
+    # test:
+    #   target: code.data.CycifImageTestDatasetFromCsv
+    #   params:
+    #     df_file: /home/jupyter/CycifPreprocess/ProcessedData/sample_patches_measurements_with_cells_gating_channels_test.csv
+
+lightning:
+  # callbacks:
+  #   image_logger:
+  #     target: main.ImageLogger
+  #     params:
+  #       batch_frequency: 1000
+
+  trainer:
+    benchmark: True
+    # max_steps: 6 # 200000
+    max_epochs:  200 #10000
+    log_every_n_steps: 5
+    val_check_interval: 0.25
