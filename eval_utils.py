@@ -1,3 +1,9 @@
+"""
+File: eval_utils.py
+Author: Ron Zeira
+Description: Utility functions for evaluating HIPI predictions.
+"""
+
 import scipy
 import pandas as pd
 import numpy as np

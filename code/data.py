@@ -1,3 +1,9 @@
+"""
+File: data.py
+Author: Ron Zeira
+Description: This file contains the data modules and manipulating function for the HIPI project.
+"""
+
 import os, torch, torchvision
 import pandas as pd
 import pytorch_lightning as pl
@@ -8,6 +14,7 @@ from functools import partial
 import pickle
 from .utils import *
 
+### Rotation transformation from a list of angles
 class MyRotationTransform:
     def __init__(self, angles):
         self.angles = angles
@@ -15,6 +22,7 @@ class MyRotationTransform:
         angle = self.angles[torch.randint(0, len(self.angles), (1,)).numpy()[0]]
         return torchvision.transforms.functional.rotate(x, angle)
 
+### Training image transformations
 def get_training_transform(horizontal_flip = True, vertical_flop = True, rotaions = True , augmentations = 'RandStainNA', normalize = True):
     training_transform = []
     if horizontal_flip:
@@ -41,12 +49,14 @@ def get_training_transform(horizontal_flip = True, vertical_flop = True, rotaion
         training_transform.append(torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]))
     return torchvision.transforms.Compose(training_transform)
 
+### Testing image transformations (no augmentations)
 def get_test_transform(normalize = True):
     test_transform = [torchvision.transforms.ConvertImageDtype(torch.float32)]
     if normalize:
         test_transform.append(torchvision.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]))
     return torchvision.transforms.Compose(test_transform)
 
+### CyCIF dataset from a csv file
 class CycifImageDatasetFromCsv(torch.utils.data.Dataset):
     def __init__(self, df_file, img_dir_prefix = "", sample_cols = ['Sample','x','y'], 
                  label_col = ['cells', 'Ki67.mean', 'FOXP3.mean', 'PD1.mean', 'PDL1.mean'], 
@@ -94,6 +104,7 @@ class CycifImageTestDatasetFromCsv(CycifImageDatasetFromCsv):
         kwargs['transform'] = get_test_transform(kwargs.get('normalize', True))
         super().__init__(*args, **kwargs)
 
+### CyCIF dataloaders from a config file
 class DataModuleFromConfig(pl.LightningDataModule):
     def __init__(self, batch_size, train=None, validation=None, test=None, predict=None,
                  num_workers=None, shuffle_test_loader=False, 

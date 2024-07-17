@@ -1,3 +1,10 @@
+"""
+File: utils.py
+Author: Ron Zeira
+Description: script for aligning HnE and Cycif images
+Usage example: python align_hne_cycif.py --hne /home/jupyter/Data/CRC_Lin/WD-76845-006.ome.tif --cycif /home/jupyter/Data/CRC_Lin/WD-76845-007.ome.tif --cells /home/jupyter/Data/CRC_Lin/WD-76845-007.csv --global_affine /home/jupyter/CycifPreprocess/ProcessedData/WD-76845-007.ome_affine_transform.npy --new_coordinates /home/jupyter/CycifPreprocess/ProcessedData/WD-76845-007.ome_new_coordinates.npy --patch_size 16384 --slack 512 --stride 1024 --resize_registration 0.03125 --min_spots 5000
+"""
+
 import numpy as np
 import pandas as pd
 import SimpleITK as sitk

@@ -1,3 +1,9 @@
+"""
+File: utils.py
+Author: Ron Zeira
+Description: This file contains the utility functions for the HIPI project.
+"""
+
 import numpy as np
 import torch
 import importlib

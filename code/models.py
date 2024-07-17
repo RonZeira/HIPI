@@ -1,3 +1,9 @@
+"""
+File: models.py
+Author: Ron Zeira
+Description: This file contains the model classes and functions for the HIPI project.
+"""
+
 import torch, torchvision, timm, os, sys
 from functools import partial
 import pytorch_lightning as pl
@@ -6,8 +12,8 @@ import pytorch_lightning as pl
 from .utils import *
 
 ############################################################################
-### https://github.com/lunit-io/benchmark-ssl-pathology
 
+### ResNet trunk feature extractor
 class SslResNetTrunk(torchvision.models.resnet.ResNet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,7 +31,7 @@ class SslResNetTrunk(torchvision.models.resnet.ResNet):
         x = self.layer4(x)
         return x
 
-
+### ssl pathology model getter from https://github.com/lunit-io/benchmark-ssl-pathology
 def ssl_get_pretrained_url(key):
     URL_PREFIX = "https://github.com/lunit-io/benchmark-ssl-pathology/releases/download/pretrained-weights"
     model_zoo_registry = {
@@ -38,7 +44,7 @@ def ssl_get_pretrained_url(key):
     pretrained_url = f"{URL_PREFIX}/{model_zoo_registry.get(key)}"
     return pretrained_url
 
-
+### ssl resnet feature extractor from pretrained
 def ssl_resnet50(pretrained, progress, key, **kwargs):
     model = SslResNetTrunk(torchvision.models.resnet.Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
@@ -49,6 +55,7 @@ def ssl_resnet50(pretrained, progress, key, **kwargs):
         print(verbose)
     return model
 
+### ssl vit feature extractor from pretrained
 def ssl_vit_small(pretrained, progress, key, **kwargs):
     patch_size = kwargs.get("patch_size", 16)
     model = timm.models.vision_transformer.VisionTransformer(
@@ -62,9 +69,7 @@ def ssl_vit_small(pretrained, progress, key, **kwargs):
         print(verbose)
     return model
 
-############################################################################
-### HIPT
-
+### ssl HIPT feature extractor from pretrained
 def get_HIPT_vit256(pretrained_weights, device=torch.device('cpu'), img_size=256):
     checkpoint_key = 'teacher'
     # model256 = vits_hipt.__dict__[arch](patch_size=16, num_classes=0)
@@ -92,6 +97,7 @@ def get_HIPT_vit256(pretrained_weights, device=torch.device('cpu'), img_size=256
 
 ############################################################################
 
+### feature extractor network wrapper class
 class pretrained_net_wrapper(torch.nn.Module):
     def __init__(self, cls_func, model_im_size, resize_to_model = False, freeze_model = True, *args, **kwargs):
         super().__init__()
@@ -106,6 +112,7 @@ class pretrained_net_wrapper(torch.nn.Module):
             x = torchvision.transforms.Resize(self.model_im_size, antialias=True)(x)
         return self.net(x)
 
+### ssl resnet50 wrapper class
 class ssl_resnet50_wrapper(pretrained_net_wrapper):
     def __init__(self, pretrained, progress, key, *args, **kwargs):
         super().__init__(pretrained = pretrained, progress = progress, key = key, 
@@ -115,7 +122,8 @@ class ssl_resnet50_wrapper(pretrained_net_wrapper):
     def forward(self,x):
         z = super().forward(x)
         return self.net.avgpool(z).squeeze(-1).squeeze(-1)
-    
+
+### ssl vit wrapper class
 class ssl_vit_small_wrapper(pretrained_net_wrapper):
     def __init__(self, pretrained, progress, key, *args, **kwargs):
         super().__init__(pretrained = pretrained, progress = progress, key = key,
@@ -123,6 +131,7 @@ class ssl_vit_small_wrapper(pretrained_net_wrapper):
                          *args, **kwargs)
         self.out_features = 384
 
+### ssl resnet50 (imagenet) wrapper class
 class imagenet_resnet_wrapper(pretrained_net_wrapper):
     def __init__(self, resnet_cls = torchvision.models.resnet50, output_layer = 'avgpool', weights = torchvision.models.ResNet50_Weights.DEFAULT, *args, **kwargs):
         super().__init__(cls_func = resnet_cls, model_im_size = None, resize_to_model = False,
@@ -134,7 +143,8 @@ class imagenet_resnet_wrapper(pretrained_net_wrapper):
             self.net = torch.nn.Sequential(*[self.net._modules[layers[i]] for i in range(layers.index(output_layer)+1)])
     def forward(self,x):
         return super().forward(x).squeeze(-1).squeeze(-1)
-    
+
+### ssl hipt256 wrapper class
 class hipt256_wrapper(pretrained_net_wrapper):
     def __init__(self, pretrained_weights, device=torch.device('cpu'), model_im_size=256, *args, **kwargs):
         super().__init__(cls_func = get_HIPT_vit256, model_im_size = model_im_size, resize_to_model = False, 
@@ -154,6 +164,7 @@ class image_channel_average(torch.nn.Module):
     def forward(self,x):
         return x.mean(dim=[-2,-1])
 
+### Loss class for the HIPI model with logging
 class cycif_loss(torch.nn.Module):
     def __init__(self, loss = torch.nn.MSELoss, channel_names = None, weights = None):
         super().__init__()
@@ -177,6 +188,7 @@ class cycif_loss(torch.nn.Module):
         log[f"{split}/total_loss"] = per_channel_loss.clone().detach().mean()
         return per_channel_loss.mean(), log
 
+### HIPI model class composed of a feature extractor and a regressor. Incldes the train/eval loops.
 class cycif_image_regressor(pl.LightningModule):
     def __init__(self, feature_extractor, out_channels, hidden_channels = [],
                 norm_layer = torch.nn.BatchNorm1d, activation_layer = torch.nn.GELU, dropout = 0.0, 

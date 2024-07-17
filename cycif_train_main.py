@@ -1,3 +1,11 @@
+"""
+File: cycif_train_main.py
+Author: Ron Zeira
+Description: Script for training the HIPI model: tile-->marker expression.
+# Configuration files for model and training paramaters are in configs folder
+Usage example: python cycif_train_main.py --base configs/ssl_vit_mlp8_16channels.yaml --logdir logs -t --gpus 0,1,2,3,
+"""
+
 import argparse, os, sys, datetime, glob, time
 import numpy as np
 import time

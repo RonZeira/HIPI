@@ -1,3 +1,9 @@
+"""
+File: split_hne_to_patches.py
+Author: Ron Zeira
+Description: Script for extracting image tiles and cell coordinates from H&E/CyCIF images
+"""
+
 import os, sys, gc, time, json, scipy, cv2, copy, skimage, tifffile, PIL
 import numpy as np
 import pandas as pd

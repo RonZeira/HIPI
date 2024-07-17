@@ -1,3 +1,10 @@
+"""
+File: create_tile_measurement_table.py
+Author: Ron Zeira
+Description: script for creating a tile feature dataframe table
+### Set constantsand arguments below
+"""
+
 import numpy as np
 import pandas as pd
 from preprocess_funcs import *

@@ -1,3 +1,9 @@
+"""
+File: preprocess_funcs.py
+Author: Ron Zeira
+Description: Functions for preprocessing and aligning HnE and CyCIF images
+"""
+
 import os, sys, scipy, cv2, tifffile, skimage
 import xml.etree.ElementTree
 import numpy as np
@@ -12,12 +18,14 @@ from skimage.transform import warp
 import numbers
 from numpy.lib.stride_tricks import as_strided
 
+### resize an image by ratio
 def resize_image_ratio(img, ratio = 1.0, interpolation = cv2.INTER_AREA):
     if ratio == 1.0: return img
     return cv2.resize(img, 
                     (int(img.shape[1] * ratio), int(img.shape[0] * ratio)),
                     interpolation = interpolation)
 
+### takes a cycif coordinates file and resizes the coordinates to the image size
 def rotate_coordinates_file(W, image_shape = None, final_resize = 1.0, channel = None, rotate_90clockwise = True):
     # read dataframe and extract coordinates
     df = None
@@ -51,7 +59,8 @@ def rotate_coordinates_file(W, image_shape = None, final_resize = 1.0, channel =
         return W
     else:
         return W, df[channel].to_numpy()
-    
+
+### takes a cycif coordinates file and performs an affine transformation on the coordinates with matrix T
 def affine_transformation_coordinates(W, T, image_shape = None, translation_resize = None, image_resize = 1.0, rotation_resize_ratio = 1.0):
     if T.shape[1] == 2:
         T = np.hstack((T,np.array([[0,0,1]]).T)).shape
@@ -71,6 +80,7 @@ def affine_transformation_coordinates(W, T, image_shape = None, translation_resi
     W = total_matrix.dot(np.hstack((W,np.ones((W.shape[0],1)))).T).T[:,:2]
     return W
 
+### takes a an image and performs an affine transformation on the image with matrix T
 def affine_transformation_image(img, T, output_shape = None, translation_resize = None, image_resize = 1.0, rotation_resize_ratio = 1.0):
     if T.shape[1] == 2:
         T = np.hstack((T,np.array([[0,0,1]]).T)).shape
@@ -87,6 +97,7 @@ def affine_transformation_image(img, T, output_shape = None, translation_resize 
     img = warp( img, total_affine, output_shape= output_shape)
     return img
 
+### read h&e image from tif file
 def read_hne_from_tif(file_name, grayscale = False, resize = 1.0, invert_color = False):
     hne_tiff = tifffile.imread(file_name)
     hne_np = np.transpose(hne_tiff, (1, 2, 0))/255
@@ -104,6 +115,7 @@ def read_hne_from_tif(file_name, grayscale = False, resize = 1.0, invert_color =
         hne_resized = 1.0 - hne_resized
     return hne_resized
 
+### read cycif channel from tif file
 def read_cycif_channel_from_tif(file_name, resize = 1.0, channel = 0, log_transform = True, min_max_norm = True, quantile_norm = 0.0, rotate_90clockwise = True):
     cycif_tiff = tifffile.imread(file_name)
     if isinstance(channel, str):
@@ -144,6 +156,7 @@ def command_iteration(method):
         + f": {method.GetOptimizerPosition()}"
     )
 
+### find an affine transformation between two images with sitk
 def sitk_affine_registration(fixed, moving, verbose = True):
     fixed = sitk.GetImageFromArray(fixed.astype(float))
     moving = sitk.GetImageFromArray(moving.astype(float))
@@ -174,6 +187,7 @@ def sitk_affine_registration(fixed, moving, verbose = True):
     out = resampler.Execute(moving)
     return sitk.GetArrayFromImage(out), outTx
 
+### find an BSpline transformation between two images with sitk
 def sitk_BSpline_registration1(fixed, moving, verbose = True):
     fixed = sitk.GetImageFromArray(fixed.astype(float))
     moving = sitk.GetImageFromArray(moving.astype(float))
@@ -207,6 +221,7 @@ def sitk_BSpline_registration1(fixed, moving, verbose = True):
     out = resampler.Execute(moving)
     return sitk.GetArrayFromImage(out), outTx
 
+### find an affine transformation between two images with elastix
 def elastix_affine_registration(fixed, moving, verbose = True, NumberOfResolutions = None):
     fixedImage = sitk.GetImageFromArray(fixed)
     movingImage = sitk.GetImageFromArray(moving)
@@ -224,12 +239,14 @@ def elastix_affine_registration(fixed, moving, verbose = True, NumberOfResolutio
     
     return sitk.GetArrayFromImage(elastixImageFilter.GetResultImage()), elastixImageFilter
 
+### elastix filter to homography
 def elastix_filter_to_homography(elastixImageFilter):
     l = elastixImageFilter.GetTransformParameterMap()[0]['TransformParameters']
     l = [float(x) for x in l]
     T = np.array([[l[0], l[1], l[4]], [l[2], l[3], l[5]], [0, 0, 1]])
     return T
 
+### compose registration functions in sitk
 def sitk_composite_registration(fixed, moving, verbose = True, registration_functions = None):
     if registration_functions is None:
         registration_functions = [sitk_affine_registration, sitk_BSpline_registration1]
@@ -242,6 +259,7 @@ def sitk_composite_registration(fixed, moving, verbose = True, registration_func
         txs.append(tx)
     return imgs, txs
 
+### global affine registration with elastix
 def global_affine_registration_elastix(fixed, moving, resize_ratio = 1.0, verbose = False, NumberOfResolutions = None):
     if resize_ratio != 1.0:
         fixed = resize_image_ratio(fixed, resize_ratio)
@@ -282,7 +300,7 @@ def global_affine_registration_elastix(fixed, moving, resize_ratio = 1.0, verbos
 #     tpointsI = STalign.transform_points_target_to_atlas(xv,v,A,np.stack([W[:,1],W[:,0]], -1))
 #     return tpointsI
 
-
+### extract the image patch and its cell measurements from image and coordinates dataframe
 def get_image_and_coordinates_patch(img, coordinates, x_start, y_start, values = None, patch_size = None, x_end = None, y_end = None, slack = 0, log_vals = False, plot = False, figsize=(15,15), s = 100):
     assert((patch_size is not None) or ((x_end is not None) and (y_end is not None)))
     if patch_size is not None:
@@ -318,7 +336,7 @@ def get_image_and_coordinates_patch(img, coordinates, x_start, y_start, values =
         plt.show()
     return sub_image, where_points, sub_coordinates, sub_values
 
-
+### iteratively approximate the inverse of a point with a transformation
 def approxInversePoint(point, tx, eps = 1e-2, max_iter = 100, img_shape = None):
     # print('point', point)
     try:
@@ -340,19 +358,21 @@ def approxInversePoint(point, tx, eps = 1e-2, max_iter = 100, img_shape = None):
             break
     return new_point
 
+### iteratively approximate the inverse of points with a transformation
 def approxInversePoints(points, tx, eps = 1e-2, max_iter = 100):
     new_points = points.copy()
     for i in range(len(new_points)):
         new_points[i] = approxInversePoint(points[i], tx, eps = eps, max_iter = max_iter)
     return new_points
 
+### iteratively approximate the inverse of points with multiple transformations
 def approxInversePointsMultiTx(points, txs, eps = 1e-2, max_iter = 100):
     new_points = points.copy()
     for tx in txs:
         new_points = approxInversePoints(new_points, tx, eps = eps, max_iter= max_iter)
     return new_points
 
-
+### extact an image patch and cell coodinates and align them with registration
 def extract_align_patch_coordinates(fixed_img, moving_img, coordinates, x_start, y_start, patch_size, slack = 0, plot = False, resize_registration = 1.0, min_spots = 0):
     fixed_sub_img, where_points, sub_coordinates, _ = get_image_and_coordinates_patch(fixed_img, coordinates, x_start, y_start, patch_size = patch_size, 
                                                                                                values = None, slack = 0, log_vals = False, 
@@ -390,6 +410,7 @@ def extract_align_patch_coordinates(fixed_img, moving_img, coordinates, x_start,
     
     return sub_coordinates_new_org_scale_shifted, where_points
 
+### coorect cell coordinateas with patch alignment
 def correct_coordinates_with_patch_alignment(fixed_img, moving_img, coordinates, patch_size, stride = None, slack = 0, plot = False, resize_registration = 1.0, min_spots = 500):
     stride = stride or patch_size
     in_shape = np.array(fixed_img.shape)
@@ -414,7 +435,7 @@ def correct_coordinates_with_patch_alignment(fixed_img, moving_img, coordinates,
     avg_coordinates = avg_coordinates/counts.reshape((len(coordinates),1))
     return avg_coordinates, counts
 
-
+### extract the cells per patch
 def cells_per_patch(img, coordinates, patch_size, stride = None, slack = 0, iter_patches = False, plot = False, resize_registration = 1.0, min_spots = 1):
     stride = stride or patch_size
     in_shape = np.array(img.shape[:2])
@@ -465,7 +486,7 @@ def cells_per_patch(img, coordinates, patch_size, stride = None, slack = 0, iter
 
 
 
-# https://github.com/dovahcrow/patchify.py/blob/master/patchify/view_as_windows.py
+### view image as patchs from https://github.com/dovahcrow/patchify.py/blob/master/patchify/view_as_windows.py
 def view_as_windows_arg_check(arr_in, window_shape, step=1, color_image = True):
     # -- basic checks on arguments
     if not isinstance(arr_in, np.ndarray):
@@ -502,6 +523,7 @@ def view_as_windows(arr_in, window_shape, step=1, color_image = True):
     arr_out = as_strided(arr_in, shape=new_shape, strides=strides)
     return arr_out
 
+### pad patch if needed
 def pad_image_after_for_patches(arr_in, window_shape, step, constant_values = 0,  color_image = True):
     window_shape, step = view_as_windows_arg_check(arr_in, window_shape, step=step, color_image = color_image)
     win_indices_shape_mod = ((np.array(arr_in.shape) - np.array(window_shape)) % np.array(step))
@@ -511,6 +533,7 @@ def pad_image_after_for_patches(arr_in, window_shape, step, constant_values = 0,
     # plt.imshow(padded_arr_in)
     return padded_arr_in
 
+### view patches with padding
 def view_as_windows_with_padding(arr_in, window_shape, step=1, color_image = True, constant_values = 0, plot = False):
     patches = view_as_windows(arr_in, window_shape, step=step, color_image = color_image)
     window_shape, step = view_as_windows_arg_check(arr_in, window_shape, step=step, color_image = color_image)

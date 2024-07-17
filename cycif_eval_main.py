@@ -1,3 +1,10 @@
+"""
+File: cycif_eval_main.py
+Author: Ron Zeira
+Description: Script for running inference on a trained HIPI model: tile-->marker expression.
+Usage example: python cycif_eval_main.py --cfg_file configs/ssl_vit_mlp8_16channels.yaml --ckpt_file "${ckpt_file}" --test_csv "${test_csv}" --num_workers 4 --out_path "${out_path}" --batch_size 512 --device cuda:0 --datasets "${dataset}"
+"""
+
 import os, sys, time, json, scipy, argparse, copy
 import numpy as np
 import pandas as pd
