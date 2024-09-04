@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# DATADIR=/home/jupyter/Data/CRC_Lin/
+DATADIR=$PWD
+
 split_hne_patches(){
-    python split_hne_to_patches.py  --hne /home/jupyter/Data/CRC_Lin/WD-76845-$1.ome.tif --out_path /home/jupyter/CycifPreprocess/Crops/WD-76845-$1 --out_file_prefix WD-76845-$1 --patch_size 256 --step 128 &
+    python split_hne_to_patches.py  --hne $DATADIR/WD-76845-$1.ome.tif --out_path $DATADIR/Crops/WD-76845-$1 --out_file_prefix WD-76845-$1 --patch_size 256 --step 128 &
 }
 
 
@@ -18,7 +21,7 @@ done
 wait
 
 split_hne_patches2(){
-    nohup python split_hne_to_patches.py  --hne /home/jupyter/Data/CRC_Lin/CRC$1-HE.ome.tif --out_path /home/jupyter/CycifPreprocess/Crops/CRC$1 --out_file_prefix CRC$1 --patch_size 256 --step 128 &
+    nohup python split_hne_to_patches.py  --hne $DATADIR/CRC$1-HE.ome.tif --out_path $DATADIR/Crops/CRC$1 --out_file_prefix CRC$1 --patch_size 256 --step 128 &
 }
 
 hne_nums=(02 03 04 05 06 07 08 09)

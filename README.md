@@ -22,9 +22,22 @@ conda env create -f environment.yml
 ### Data preprocessing
 
 *   Download H&amp;Es and CyCIF files from [Lin et al. 2023](https://github.com/labsyspharm/CRC_atlas_2022)
+```
+bash download_CRC_Lin23.sh
+```
 *   Align H&amp;Es and CyCIF images using the `preprocess/align_hne_cycif.sh` script
+```
+bash align_hne_cycif.sh
+```
 *   Extract image tiles using the `preprocess/split_hne_to_tiles.sh` script
-*   Create a tile feature dataframe table using the `create_tile_measurement_table.py` script
+```
+bash split_hne_to_tiles.sh
+```
+*   Create a tile feature dataframe table using the `preprocess/create_tile_measurement_table.py` script
+```
+python create_tile_measurement_table.py
+```
+All scripts use the current directory unless otherwise specified.
 
 ### Training
 

@@ -7,6 +7,7 @@ Description: script for creating a tile feature dataframe table
 
 import numpy as np
 import pandas as pd
+import os
 from preprocess_funcs import *
 import itertools
 
@@ -100,8 +101,8 @@ coordinate_names = ['hne_X', 'hne_Y']
 min_points = 1
 patch_size = 256
 step = 128
-data_path = '/home/jupyter/Data/CRC_Lin/'
-output_path = '/home/jupyter/CycifPreprocess/ProcessedData/'
+data_path = os.getcwd() # '/home/jupyter/Data/CRC_Lin/'
+output_path = os.getcwd() # '/home/jupyter/CycifPreprocess/ProcessedData/'
 potential_samples = {f'{i:02}':f'{data_path}/CRC{i:02}_new_coordinates.csv' for i in [2, 3, 12, 13, 14, 15, 17]}
 
 ###########################################################################################################################
