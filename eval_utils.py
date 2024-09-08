@@ -78,7 +78,7 @@ def plot_scatter_from_df(df, c, sample = None, axis=True, xy = ('x','y'), c_suff
         plt.gca().axis('off')
     if colorbar:
         cbar = plt.colorbar(orientation=orientation, pad=-0.03, shrink=0.8, aspect = 30, format = '%1.1f')
-        cbar.ax.tick_params(labelsize=15)
+        cbar.ax.tick_params(labelsize=20)
         if not rotate_cbar_ticks is None:
             cbar.ax.tick_params(rotation=rotate_cbar_ticks)
     if not save is None:
@@ -241,7 +241,7 @@ def plot_prot_cooccurrence(df, prots, figsize=(8,8), s = 2.0, palette = 'deep', 
     plt.gca().invert_yaxis()
     plt.gca().axis('off')
     if legend:
-        sns.move_legend(g, "upper left", title=None, frameon=True, fontsize = 13.5, ncol = 2, columnspacing = 0.5, labelspacing = 0.0, handlelength = 0.0, bbox_to_anchor=(0.0, 0.0))# bbox_to_anchor=(0.0, 1.0))
+        sns.move_legend(g, "upper left", title=None, frameon=True, fontsize = 20, ncol = 1, columnspacing = 0.5, labelspacing = 0.0, handlelength = 0.0, bbox_to_anchor=(0.0, 0.0))# bbox_to_anchor=(0.0, 1.0))
     if save:
         plt.savefig(save, bbox_inches='tight', pad_inches=0)
     else:
